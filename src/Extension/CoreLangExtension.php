@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Okvpn\Expression;
+namespace Okvpn\Expression\Extension;
 
 use Okvpn\Expression\Parser\ReturnTokenParser;
 use Okvpn\Expression\Parser\SetTokenParser;

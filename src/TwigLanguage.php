@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Okvpn\Expression;
 
+use Okvpn\Expression\Extension\CoreLangExtension;
 use Twig\Cache\CacheInterface;
 use Twig\Environment;
 use Twig\Error\Error;
@@ -67,7 +68,7 @@ class TwigLanguage extends Environment
 
     protected function replaceCompileSource(string $code): string
     {
-        $code = preg_replace('#\sextends\sTemplate#', ' extends \\Okvpn\\Expression\\TwigLanguage', $code, 1);
+        $code = preg_replace('#\sextends\sTemplate#', ' extends \\Okvpn\\Expression\\EvalTemplate', $code, 1);
         return preg_replace('#\sfunction\sdoDisplay\(array\s\$#', ' function doEval(array &$', $code, 1);
     }
 
