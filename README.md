@@ -3,6 +3,10 @@ PHP Expression Language based on TWIG
 
 This library provides interfaces for safe evaluate expressions, compile them to native PHP code for performance.
 
+[![Tests](https://github.com/okvpn/expression-language/actions/workflows/tests.yml/badge.svg)](https://github.com/okvpn/expression-language/actions/workflows/tests.yml)
+[![Latest Stable Version](http://poser.pugx.org/okvpn/expression-language/v)](https://packagist.org/packages/okvpn/expression-language)
+[![PHP Version Require](http://poser.pugx.org/okvpn/expression-language/require/php)](https://packagist.org/packages/okvpn/expression-language)
+
 ## Purpose
 It is an alternative to the Symfony Expression Language which allows more operations such as `for` `if` etc.
 You can to implement any logic and execute it safely and quickly. We removed `PRINT_TOKEN` `TEXT_TOKEN` from 
