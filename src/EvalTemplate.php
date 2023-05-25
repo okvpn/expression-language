@@ -10,12 +10,11 @@ use Twig\Template;
 
 abstract class EvalTemplate extends Template
 {
-    protected $logs = [];
+    protected $logHandler;
 
-    public function script(array|TwigData $context, &$logs = null): mixed
+    public function script(array|TwigData $context): mixed
     {
-        $this->logs = [];
-        return $this->evalWithErrorHandling($context, $logs);
+        return $this->evalWithErrorHandling($context);
     }
 
     public function evalFast(array $context): mixed
@@ -23,20 +22,19 @@ abstract class EvalTemplate extends Template
         return $this->doEval($context);
     }
 
-    public function reset(): array
+    public function setLogHandler(callable|\Closure|null $handler): void
     {
-        $logs = $this->logs;
-        $this->logs = [];
-
-        return $logs;
+        $this->logHandler = $handler;
     }
 
-    protected function log($log): void
+    protected function log($log, $line = null): void
     {
-        $this->logs[] = $log;
+        if (null !== $this->logHandler) {
+            call_user_func($this->logHandler, $log, $line);
+        }
     }
 
-    protected function evalWithErrorHandling(array|TwigData $data, &$logs = null): mixed
+    protected function evalWithErrorHandling(array|TwigData $data): mixed
     {
         $context = $data instanceof TwigData ? $data->getData() : $data;
 
@@ -60,7 +58,6 @@ abstract class EvalTemplate extends Template
 
             throw $e;
         } finally {
-            $logs = $this->reset();
             if ($data instanceof TwigData) {
                 $data->setData($context);
             }

@@ -60,7 +60,8 @@ class SetNode extends Node implements NodeCaptureInterface
 
             $compiler->subcompile($this->getNode('names'), false);
             foreach ($this->getAttribute('arrays') as $prop) {
-                $compiler->raw('[')
+                $prop === null ? $compiler->raw('[]') :
+                    $compiler->raw('[')
                     ->subcompile($prop)
                     ->raw(']');
             }

@@ -23,7 +23,7 @@ class SetTokenParser extends AbstractTokenParser
 
         $arrayAccess = [];
         while ($stream->nextIf(/* Token::OPERATOR_TYPE */ 9, '[')) {
-            $arrayAccess[] = $expr->parsePrimaryExpression();
+            $arrayAccess[] = !$stream->test(9, ']') ? $expr->parsePrimaryExpression() : null;
             $stream->expect(/* Token::BLOCK_END_TYPE */ 9, ']');
         }
 

@@ -1,0 +1,17 @@
+{% set msg = 'New sms' %}
+{% set newUsers = '' %}
+{% set usersList = [] %}
+
+{% for user in users %}
+    {% if user > lastUserId %}
+        {% set newUsers = newUsers ~ user ~ ' ' %}
+        {% set usersList[_key] = user %}
+        {% set lastUserId = user %}
+    {% endif %}
+{% endfor %}
+
+{% if newUsers is not empty %}
+    {{ newUsers }}
+{% endif %}
+
+{% return usersList %}

@@ -30,6 +30,8 @@ class TwigLanguage extends Environment
     protected $debug;
     protected $strictVariables;
 
+    protected $logHandler;
+
     public function __construct(protected iterable $extensions = [], LoaderInterface $loader = null, array $options = [])
     {
         $get = \Closure::bind(fn($env, $prop) => $env->{$prop}, $this, Environment::class);
@@ -72,12 +74,16 @@ class TwigLanguage extends Environment
         return preg_replace('#\sfunction\sdoDisplay\(array\s\$#', ' function doEval(array &$', $code, 1);
     }
 
+    public function setLogHandler(callable|\Closure|null $logHandler): void
+    {
+        $this->logHandler = $logHandler;
+    }
+
     /**
      * Execute a twig expression script.
      *
      * @param string $name The template name or content
      * @param array|\ArrayAccess $context
-     * @param string|null $logs
      * @param bool|null $asString
      *
      * @return mixed
@@ -85,11 +91,12 @@ class TwigLanguage extends Environment
      * @throws RuntimeError When a previously generated cache is corrupted
      * @throws SyntaxError When an error occurred during compilation
      */
-    public function execute($name, array|\ArrayAccess $context = [],  &$logs = null, ?bool $asString = null): mixed
+    public function execute($name, array|\ArrayAccess $context = [], ?bool $asString = null): mixed
     {
         $template = $this->loadTemplate($this->getTemplateClass($name), $name, null, $asString);
+        $template->setLogHandler($this->logHandler);
 
-        return $template->script($context, $logs);
+        return $template->script($context);
     }
 
     /**
