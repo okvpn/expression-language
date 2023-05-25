@@ -64,6 +64,8 @@ TXT;
 var_dump($lang->execute($script, $context));
 
 // execute with template 
+$loader = new \Twig\Loader\FilesystemLoader(__DIR__ . '/scripts');
+$lang = new TwigLanguage(loader: $loader);
 var_dump($lang->execute('test22.twig', $context));
 ```
 
