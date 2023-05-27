@@ -19,7 +19,7 @@ class LangNodeVisitor implements NodeVisitorInterface
             return new PrintToLoggerNode($node->getNode('expr'), $node->getTemplateLine());
         }
         if ($node instanceof TextNode) {
-            return new PrintToLoggerNode($node->getNode('expr'), $node->getTemplateLine());
+            return new PrintToLoggerNode($node->getAttribute('data'), $node->getTemplateLine());
         }
 
         return $node;
