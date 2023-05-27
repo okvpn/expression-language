@@ -6,6 +6,7 @@ namespace Okvpn\Expression;
 
 use Okvpn\Expression\Extension\CoreLangExtension;
 use Twig\Cache\CacheInterface;
+use Twig\Cache\NullCache;
 use Twig\Environment;
 use Twig\Error\Error;
 use Twig\Error\LoaderError;
@@ -29,6 +30,7 @@ class TwigLanguage extends Environment
     protected $optionsHash;
     protected $debug;
     protected $strictVariables;
+    protected $clearTextTokens;
 
     protected $logHandler;
 
@@ -42,6 +44,7 @@ class TwigLanguage extends Environment
         $this->extensionSet = $get($this, 'extensionSet');
         $this->debug = $get($this, 'debug');
         $this->strictVariables = $get($this, 'strictVariables');
+        $this->clearTextTokens = $options['clear_text_tokens'] ?? true;
 
         $this->addExtension(new CoreLangExtension());
     }
@@ -53,9 +56,11 @@ class TwigLanguage extends Environment
     {
         $steam = $this->tokenize($source);
         $tokens = \Closure::bind(static fn($steam) => $steam->tokens, null, TokenStream::class)($steam);
-        $tokens = array_filter($tokens, fn($token) => $token->getType() !== 0);
-        $stream = new TokenStream(array_values($tokens), $steam->getSourceContext());
+        if (true === $this->clearTextTokens) {
+            $tokens = array_filter($tokens, fn($token) => $token->getType() !== 0);
+        }
 
+        $stream = new TokenStream(array_values($tokens), $steam->getSourceContext());
         $nodes = $this->parse($stream);
 
         try {
@@ -71,7 +76,9 @@ class TwigLanguage extends Environment
     protected function replaceCompileSource(string $code): string
     {
         $code = preg_replace('#\sextends\sTemplate#', ' extends \\Okvpn\\Expression\\EvalTemplate', $code, 1);
-        return preg_replace('#\sfunction\sdoDisplay\(array\s\$#', ' function doEval(array &$', $code, 1);
+        $code = preg_replace('#\sextends\s\\\\Twig\\\\Template#', ' extends \\Okvpn\\Expression\\EvalTemplate', $code, 1);
+
+        return preg_replace('#\sprotected\sfunction\sdoDisplay\(array\s\$#', ' public function doEval(array &$', $code, 1);
     }
 
     public function setLogHandler(callable|\Closure|null $logHandler): void
@@ -83,7 +90,7 @@ class TwigLanguage extends Environment
      * Execute a twig expression script.
      *
      * @param string $name The template name or content
-     * @param array|\ArrayAccess $context
+     * @param array|TwigData $context. Use TwigData if you need to modify data in your script.
      * @param bool|null $asString
      *
      * @return mixed
@@ -91,34 +98,74 @@ class TwigLanguage extends Environment
      * @throws RuntimeError When a previously generated cache is corrupted
      * @throws SyntaxError When an error occurred during compilation
      */
-    public function execute($name, array|\ArrayAccess $context = [], ?bool $asString = null): mixed
+    public function execute($name, array|TwigData $context = [], ?bool $asString = null): mixed
     {
-        $template = $this->loadTemplate($this->getTemplateClass($name), $name, null, $asString);
+        $template = $this->loadScript($this->getScriptClass($name), $name, null, $asString);
         $template->setLogHandler($this->logHandler);
 
         return $template->script($context);
     }
 
     /**
+     * Validate script
+     *
+     * @param string $script
+     * @return void
+     *
+     * @throws SyntaxError When an error occurred during compilation
+     */
+    public function validateScript(string $script): void
+    {
+        $backup = $this->cache;
+        $this->cache = new NullCache();
+
+        try {
+            $this->loadScript($this->getScriptClass($script), $script, null, true);
+        } finally {
+            $this->cache = $backup;
+        }
+    }
+
+    /**
      * Evaluate an expression.
      *
      * @param string $name The template name or content
-     * @param array|\ArrayAccess $context
+     * @param array $context
      *
      * @return mixed
      */
-    public function evaluate(string $expression, array|\ArrayAccess $context = []): mixed
+    public function evaluate(string $expression, array $context = []): mixed
     {
         $template = $this->loadedExpressions[$expression] ??=
-            $this->loadTemplate($this->getTemplateClass($wrap = '{% return ' . $expression . ' %}'), $wrap, null, true);
+            $this->loadScript($this->getScriptClass($wrap = '{% return ' . $expression . ' %}'), $wrap, null, true);
 
-        return $template->evalFast($context);
+        return $template->doEval($context);
+    }
+
+    /**
+     * Validate expression.
+     *
+     * @param string $script
+     * @return void
+     *
+     * @throws SyntaxError When an error occurred during compilation
+     */
+    public function validateExpression(string $expression): void
+    {
+        $backup = $this->cache;
+        $this->cache = new NullCache();
+
+        try {
+            $this->loadScript($this->getScriptClass($wrap = '{% return ' . $expression . ' %}'), $wrap, null, true);
+        } finally {
+            $this->cache = $backup;
+        }
     }
 
     /**
      * {@inheritdoc}
      */
-    public function getTemplateClass(string $name, int $index = null): string
+    public function getScriptClass(string $name, int $index = null): string
     {
         if (false === $this->initialized) {
             foreach ($this->extensions as $extension) {
@@ -140,7 +187,28 @@ class TwigLanguage extends Environment
     /**
      * {@inheritdoc}
      */
-    public function loadTemplate(string $cls, string $nameOrContent, int $index = null, ?bool $asString = null): EvalTemplate
+    public function loadTemplate($cls, $arg1 = null, $arg2 = null): EvalTemplate
+    {
+        if (is_string($arg1)) {
+            return $this->loadScript($cls, $arg1, $arg2);
+        } else {
+            // Twig 2
+            return $this->loadScript($this->getScriptClass($cls), $cls, $arg1);
+        }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getTemplateClass($name, $index = null): string
+    {
+        return $this->getScriptClass($name, $index);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function loadScript(string $cls, string $nameOrContent, int $index = null, ?bool $asString = null): EvalTemplate
     {
         $mainCls = $cls;
         if (null !== $index) {
@@ -182,7 +250,7 @@ class TwigLanguage extends Environment
             }
         }
 
-        $this->extensionSet->initRuntime();
+        $this->extensionSet->initRuntime($this);
 
         return $this->loadedTemplates[$cls] = new $cls($this);
     }

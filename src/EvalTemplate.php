@@ -17,11 +17,6 @@ abstract class EvalTemplate extends Template
         return $this->evalWithErrorHandling($context);
     }
 
-    public function evalFast(array $context): mixed
-    {
-        return $this->doEval($context);
-    }
-
     public function setLogHandler(callable|\Closure|null $handler): void
     {
         $this->logHandler = $handler;
@@ -80,5 +75,5 @@ abstract class EvalTemplate extends Template
      *
      * @return mixed
      */
-    abstract protected function doEval(array &$context, array $blocks = []);
+    abstract public function doEval(array &$context, array $blocks = []);
 }
