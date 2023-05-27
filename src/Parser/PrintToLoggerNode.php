@@ -27,15 +27,17 @@ class PrintToLoggerNode extends Node
         if ($this->hasAttribute('data')) {
             $compiler
                 ->addDebugInfo($this)
-                ->write('echo ')
+                ->write('$this->log(')
                 ->string($this->getAttribute('data'))
-                ->raw(";\n")
+                ->raw(', ' . $this->lineno)
+                ->raw(");\n")
             ;
         } else {
             $compiler
                 ->addDebugInfo($this)
                 ->write('$this->log(')
                 ->subcompile($this->getNode('expr'))
+                ->raw(', ' . $this->lineno)
                 ->raw(");\n")
             ;
         }
