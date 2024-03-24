@@ -9,7 +9,7 @@ use Twig\Node\Node;
 
 class ReturnNode extends Node
 {
-    public function __construct(Node $values, int $lineno, string $tag = null)
+    public function __construct(Node $values, int $lineno, ?string $tag = null)
     {
         parent::__construct(['values' => $values], [], $lineno, $tag);
     }

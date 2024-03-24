@@ -34,7 +34,7 @@ class TwigLanguage extends Environment
 
     protected $logHandler;
 
-    public function __construct(protected iterable $extensions = [], LoaderInterface $loader = null, array $options = [])
+    public function __construct(protected iterable $extensions = [], ?LoaderInterface $loader = null, array $options = [])
     {
         $get = \Closure::bind(fn($env, $prop) => $env->{$prop}, $this, Environment::class);
 
@@ -165,7 +165,7 @@ class TwigLanguage extends Environment
     /**
      * {@inheritdoc}
      */
-    public function getScriptClass(string $name, int $index = null): string
+    public function getScriptClass(string $name, ?int $index = null): string
     {
         if (false === $this->initialized) {
             foreach ($this->extensions as $extension) {
@@ -208,7 +208,7 @@ class TwigLanguage extends Environment
     /**
      * {@inheritdoc}
      */
-    public function loadScript(string $cls, string $nameOrContent, int $index = null, ?bool $asString = null): EvalTemplate
+    public function loadScript(string $cls, string $nameOrContent, ?int $index = null, ?bool $asString = null): EvalTemplate
     {
         $mainCls = $cls;
         if (null !== $index) {
