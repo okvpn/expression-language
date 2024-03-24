@@ -10,7 +10,7 @@ use Twig\Node\Node;
 
 class PrintToLoggerNode extends Node
 {
-    public function __construct($expr, int $lineno, string $tag = null)
+    public function __construct($expr, int $lineno, ?string $tag = null)
     {
         if ($expr instanceof AbstractExpression) {
             parent::__construct(['expr' => $expr], [], $lineno, $tag);
