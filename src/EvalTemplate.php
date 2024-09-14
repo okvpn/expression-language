@@ -62,9 +62,10 @@ abstract class EvalTemplate extends Template
     /**
      * {@inheritdoc}
      */
-    protected function doDisplay(array $context, array $blocks = [])
+    protected function doDisplay(array $context, array $blocks = []): iterable
     {
         $this->doEval($context, $blocks);
+        return [];
     }
 
     /**

@@ -77,8 +77,11 @@ class TwigLanguage extends Environment
     {
         $code = preg_replace('#\sextends\sTemplate#', ' extends \\Okvpn\\Expression\\EvalTemplate', $code, 1);
         $code = preg_replace('#\sextends\s\\\\Twig\\\\Template#', ' extends \\Okvpn\\Expression\\EvalTemplate', $code, 1);
+        $code = preg_replace('#\sprotected\sfunction\sdoDisplay\(.*\):\siterable#', ' public function doEval(array &$context, array $blocks = [])', $code, 1);
+        $code = preg_replace('#\sprotected\sfunction\sdoDisplay\(array\s\$#', ' public function doEval(array &$', $code, 1);
+        $code = preg_replace('#^\s+yield\s(.*)$#m', '', $code);
 
-        return preg_replace('#\sprotected\sfunction\sdoDisplay\(array\s\$#', ' public function doEval(array &$', $code, 1);
+        return $code;
     }
 
     public function setLogHandler(callable|\Closure|null $logHandler): void
